@@ -27,16 +27,16 @@ public:
   if(registry.size()>max_part||history.size()>max_part)return false;
   std::string data(magic);put64(data,registry.size());put64(data,history.size());
   data.append(registry);data.append(history);put64(data,hash(data));
-  auto temp=target;temp+=".pending";
+  // Refuse symlinks at the destination or staging path to avoid redirection.\n  std::error_code status_ec;\n  if(std::filesystem::is_symlink(std::filesystem::symlink_status(target,status_ec))) return false;\n  auto temp=target;temp+=".pending";\n  status_ec.clear();\n  if(std::filesystem::is_symlink(std::filesystem::symlink_status(temp,status_ec))) return false;
   {std::ofstream out(temp,std::ios::binary|std::ios::trunc);if(!out)return false;
    out.write(data.data(),static_cast<std::streamsize>(data.size()));out.flush();
    if(!out.good()){out.close();std::error_code ec;std::filesystem::remove(temp,ec);return false;}}
   std::error_code ec;std::filesystem::rename(temp,target,ec);
-  if(ec){std::filesystem::remove(temp,ec);return false;}return true;
+  // Do not remove the old checkpoint to force replacement on Windows.\n  // A failed replacement preserves the old destination and reports failure.\n  if(ec){std::error_code cleanup_ec;std::filesystem::remove(temp,cleanup_ec);return false;}return true;
  }
  static bool load(const std::filesystem::path& target,std::string& registry,std::string& history){
   std::error_code ec;const auto len=std::filesystem::file_size(target,ec);
-  if(ec||len>2*max_part+magic.size()+24||len<magic.size()+24)return false;
+  if(ec||len>2*max_part+magic.size()+24||len<magic.size()+24)return false;\n  std::error_code status_ec;\n  if(std::filesystem::is_symlink(std::filesystem::symlink_status(target,status_ec)))return false;
   std::ifstream in(target,std::ios::binary);if(!in)return false;
   std::string data(static_cast<std::size_t>(len),'\0');
   in.read(data.data(),static_cast<std::streamsize>(data.size()));if(!in)return false;
