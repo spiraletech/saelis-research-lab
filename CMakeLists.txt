@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(saelis_research_lab VERSION 0.1.0 LANGUAGES CXX)
+project(saelis_research_lab VERSION 0.2.0 LANGUAGES CXX)
 include(CTest)
 add_library(saelis_research src/research.cpp)
 add_library(SAELIS::Research ALIAS saelis_research)
