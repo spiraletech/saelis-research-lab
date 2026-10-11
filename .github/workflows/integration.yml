@@ -1,0 +1,36 @@
+name: SAELIS + Spiral Core integration
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  cross-repo:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        config: [Debug, Release]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout SAELIS Research Lab
+        uses: actions/checkout@v4
+        with:
+          path: saelis-research-lab
+      - name: Checkout Spiral Core SDK
+        uses: actions/checkout@v4
+        with:
+          repository: spiraletech/spiral-core-sdk
+          ref: main
+          path: spiral-core-sdk
+      - name: Configure complete integration
+        shell: bash
+        run: |
+          cmake -S saelis-research-lab -B build \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
+            -DSAELIS_BUILD_CORE_INTEGRATION=ON \
+            -DSPIRAL_CORE_SDK_DIR="$GITHUB_WORKSPACE/spiral-core-sdk"
+      - name: Build
+        run: cmake --build build --config ${{ matrix.config }} --parallel
+      - name: Run all tests
+        run: ctest --test-dir build -C ${{ matrix.config }} --output-on-failure
