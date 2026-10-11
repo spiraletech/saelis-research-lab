@@ -16,6 +16,7 @@ class Registry {
  std::vector<Candidate> items_;
  public:
  bool add(Candidate candidate);
+ bool replace(Candidate candidate);
  const Candidate* find(const std::string& id) const;
  std::vector<Assessment> rank() const;
  bool save(const std::string& path) const;
