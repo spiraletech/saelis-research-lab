@@ -25,6 +25,15 @@ bool Registry::add(Candidate c){
  if(!assess(c)||find(c.id)!=nullptr||items_.size()>=max_records) return false;
  items_.push_back(std::move(c));return true;
 }
+bool Registry::replace(Candidate candidate){
+ if(!assess(candidate)) return false;
+ auto it=std::find_if(items_.begin(),items_.end(),[&](const auto& c){return c.id==candidate.id;});
+ if(it==items_.end()) return false;
+ auto staged=items_;
+ staged[static_cast<std::size_t>(it-items_.begin())]=std::move(candidate);
+ items_.swap(staged);
+ return true;
+}
 const Candidate* Registry::find(const std::string& id) const {
  const auto it=std::find_if(items_.begin(),items_.end(),[&](const auto& c){return c.id==id;});
  return it==items_.end()?nullptr:&*it;
