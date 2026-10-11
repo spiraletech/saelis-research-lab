@@ -5,12 +5,12 @@
 namespace saelis {
 struct Evidence { std::string source_url; std::string summary; };
 struct Candidate {
- std::string id;
- std::string title;
+ std::string id; std::string title;
  int utility{}; int integration_cost{}; int maturity{}; int risk{};
  std::vector<Evidence> evidence;
 };
 struct Assessment { std::string id; int score{}; bool evidenced{}; };
+bool valid_evidence(const Evidence& evidence);
 std::optional<Assessment> assess(const Candidate& candidate);
 class Registry {
  std::vector<Candidate> items_;
@@ -18,5 +18,7 @@ class Registry {
  bool add(Candidate candidate);
  const Candidate* find(const std::string& id) const;
  std::vector<Assessment> rank() const;
+ bool save(const std::string& path) const;
+ bool load(const std::string& path);
 };
 }
