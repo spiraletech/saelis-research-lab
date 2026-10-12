@@ -7,6 +7,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <unordered_map>
 #include <vector>
 namespace saelis {
 struct ResearchChange {
@@ -21,8 +22,16 @@ struct ResearchChange {
 };
 class ResearchHistory {
  std::vector<ResearchChange> records_;
+ // Derived index only; V1 file format remains unchanged.
+ std::unordered_map<std::string,int> latest_scores_;
+ // V1 scoring domain: 4*u + 2*m - 2*c - 3*r; each input is [0,5].
+ // Persisted scores outside [-25,30] cannot be produced by assess().
+ static constexpr int min_assessment_score=-25;
+ static constexpr int max_assessment_score=30;
  static bool valid(const ResearchChange& e) {
-  return e.unix_seconds>=0 && !e.candidate_id.empty() && !e.actor.empty() &&
+  return e.prior_score>=min_assessment_score && e.prior_score<=max_assessment_score &&
+    e.new_score>=min_assessment_score && e.new_score<=max_assessment_score &&
+    e.unix_seconds>=0 && !e.candidate_id.empty() && !e.actor.empty() &&
     !e.reason.empty() && e.candidate_id.size()<=256 && e.actor.size()<=256 &&
     e.reason.size()<=4096 && e.evidence_url.size()<=2048 &&
     (e.evidence_url.empty() || valid_evidence({e.evidence_url,"provenance reference"}));
@@ -33,7 +42,15 @@ public:
   if(records_.size()>=100000 || !valid(e))return false;
   const auto expected=records_.empty()?1:records_.back().sequence+1;
   if(!expected || e.sequence!=expected || (!records_.empty() && e.unix_seconds<records_.back().unix_seconds))return false;
-  records_.push_back(std::move(e));return true;
+  const auto previous=latest_scores_.find(e.candidate_id);
+  if(previous!=latest_scores_.end() && e.prior_score!=previous->second)return false;
+  // Reserve the index entry before appending, so allocation failure cannot
+  // leave an appended record without its corresponding lookup entry.
+  auto [entry,inserted]=latest_scores_.try_emplace(e.candidate_id,0);
+  try { records_.push_back(std::move(e)); }
+  catch (...) { if(inserted)latest_scores_.erase(entry);throw; }
+  entry->second=records_.back().new_score;
+  return true;
  }
  bool save(const std::string& path) const {
   std::ofstream out(path,std::ios::binary|std::ios::trunc);
@@ -58,7 +75,8 @@ public:
         ||!staged.append(std::move(e)))return false;
   }
   in>>std::ws;if(!in.eof())return false;
-  records_.swap(staged.records_);return true;
+  records_.swap(staged.records_);
+  latest_scores_.swap(staged.latest_scores_);return true;
  }
 };
 }
