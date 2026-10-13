@@ -43,7 +43,9 @@ public:
   const auto expected=records_.empty()?1:records_.back().sequence+1;
   if(!expected || e.sequence!=expected || (!records_.empty() && e.unix_seconds<records_.back().unix_seconds))return false;
   const auto previous=latest_scores_.find(e.candidate_id);
-  if(previous!=latest_scores_.end() && e.prior_score!=previous->second)return false;
+  // First change for each candidate starts from the absent (zero) score.
+  // Later changes must chain exactly from that candidate's latest score.
+  if(e.prior_score!=(previous==latest_scores_.end()?0:previous->second))return false;
   // Reserve the index entry before appending, so allocation failure cannot
   // leave an appended record without its corresponding lookup entry.
   auto [entry,inserted]=latest_scores_.try_emplace(e.candidate_id,0);
