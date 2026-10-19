@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
+#include <string_view>
 #include <utility>
 namespace saelis {
 namespace {
@@ -13,7 +14,16 @@ bool valid_evidence(const Evidence& e){
  const bool https=e.source_url.starts_with("https://");
  const bool http=e.source_url.starts_with("http://");
  const auto offset=https?8u:7u;
- return (https||http) && e.source_url.size()>offset && e.source_url.size()<=2048 && valid_text(e.summary);
+ if(!(https||http) || e.source_url.size()>2048 || !valid_text(e.summary)) return false;
+ const std::string_view url=e.source_url;
+ const auto end=url.find_first_of("/?#",offset);
+ const auto authority=url.substr(offset,end==std::string_view::npos?end:end-offset);
+ // A URL without a host or with embedded credentials is not reliable provenance.
+ if(authority.empty() || authority.front()==':' || authority.find('@')!=std::string_view::npos) return false;
+ // Reject raw whitespace, control bytes, DEL and browser-normalized backslashes.
+ for(const unsigned char byte:e.source_url)
+  if(byte<=0x20 || byte==0x7f || byte=='\\') return false;
+ return true;
 }
 std::optional<Assessment> assess(const Candidate& c){
  if(!valid_text(c.id)||!valid_text(c.title)||!valid_score(c.utility)||!valid_score(c.integration_cost)||!valid_score(c.maturity)||!valid_score(c.risk)||c.evidence.size()>max_evidence) return std::nullopt;
