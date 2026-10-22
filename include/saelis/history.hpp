@@ -21,8 +21,13 @@ struct ResearchChange {
 };
 class ResearchHistory {
  std::vector<ResearchChange> records_;
+ // score = 4*utility + 2*maturity - 2*integration_cost - 3*risk, inputs 0..5.
+ static constexpr int min_score = -25, max_score = 30;
  static bool valid(const ResearchChange& e) {
-  return e.unix_seconds>=0 && !e.candidate_id.empty() && !e.actor.empty() &&
+  return e.unix_seconds>=0 &&
+    e.prior_score>=min_score && e.prior_score<=max_score &&
+    e.new_score>=min_score && e.new_score<=max_score &&
+    !e.candidate_id.empty() && !e.actor.empty() &&
     !e.reason.empty() && e.candidate_id.size()<=256 && e.actor.size()<=256 &&
     e.reason.size()<=4096 && e.evidence_url.size()<=2048 &&
     (e.evidence_url.empty() || valid_evidence({e.evidence_url,"provenance reference"}));
