@@ -62,7 +62,7 @@ struct DriftAssessment {
   PowerLevel evidence_level{PowerLevel::Unclassified};
   ShadowCore shadow{ShadowCore::Clear};
   std::vector<DriftSignal> signals;
-  bool promotion_allowed{false};
+  bool review_candidate{false};
   bool requires_review{true};
 };
 
@@ -113,9 +113,9 @@ inline DriftAssessment assess_drift(const InputOutputRecord& r, const LevelEvide
   else if (r.instruction_preserved == Check::Fail ||
            r.creative_identity_preserved == Check::Fail)
     a.shadow = ShadowCore::Soulless;
-  a.promotion_allowed = a.evidence_level != PowerLevel::Unclassified &&
+  a.review_candidate = a.evidence_level != PowerLevel::Unclassified &&
      a.shadow == ShadowCore::Clear && a.signals.empty() && r.user_approved;
-  a.requires_review = !a.promotion_allowed;
+  a.requires_review = true; // eligibility is not approval; only owner can promote canon
   return a;
 }
 
