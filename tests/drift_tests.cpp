@@ -35,8 +35,8 @@ int main() {
     io.build_and_tests = io.regression_safe = io.instruction_preserved =
     io.creative_identity_preserved = Check::Pass;
   auto clean = assess_drift(io, e);
-  assert(clean.promotion_allowed);
-  assert(!clean.requires_review);
+  assert(clean.review_candidate);
+  assert(clean.requires_review);
   assert(clean.shadow == ShadowCore::Clear);
   assert(clean.evidence_level == PowerLevel::Transcendent);
 
@@ -44,7 +44,7 @@ int main() {
   unclear.instruction_preserved = Check::Unknown;
   auto unknown = assess_drift(unclear, e);
   assert(unknown.shadow == ShadowCore::Clear);
-  assert(!unknown.promotion_allowed);
+  assert(!unknown.review_candidate);
   assert(has(unknown, DriftSignal::UnverifiedEvidence));
 
   auto intent = io;
@@ -52,7 +52,7 @@ int main() {
   auto soulless = assess_drift(intent, e);
   assert(soulless.shadow == ShadowCore::Soulless);
   assert(has(soulless, DriftSignal::IntentMismatch));
-  assert(!soulless.promotion_allowed);
+  assert(!soulless.review_candidate);
 
   auto failed = io;
   failed.build_and_tests = Check::Fail;
@@ -67,7 +67,7 @@ int main() {
 
   auto missing = io;
   missing.output_sha256 = "this-is-not-a-sha256";
-  assert(!assess_drift(missing, e).promotion_allowed);
+  assert(!assess_drift(missing, e).review_candidate);
   assert(has(assess_drift(missing, e), DriftSignal::MissingProvenance));
   auto not_approved = io;
   not_approved.user_approved = false;
