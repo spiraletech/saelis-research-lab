@@ -25,3 +25,17 @@ ctest --test-dir build-research -C Release --output-on-failure
 ```
 
 The adapter rejects wrong topics, corrupted or malformed frames, unsupported score ranges and invalid candidate identifiers. The integrity checksum is not authentication. Evidence validity is the library's existing structural check, not a fact-check. The local isolated fixture passed; CI against the full current repositories remains to be verified.
+
+## SpiralOS input/output drift and SHADOW CORE (review proposal)
+
+The independent, side-effect-free evaluator in `include/saelis/drift.hpp`
+compares structured checks for original user-input provenance, approved intent,
+candidate output, canon adherence, build/test receipts and creative identity.
+It classifies an *artifact* using the original SpiralOS power levels and the
+SHADOW CORE overlay: **CORRUPTED** (integrity/authority), **DEFEATED**
+(failing tests/regressions), **SOULLESS** (lost user intent/creative identity).
+Unknown evidence blocks promotion without automatically being called a defect.
+
+See [SHADOW CORE protocol](docs/SHADOW_CORE_PROTOCOL.md). This is a proposed
+assessment tool, **not** a live monitor, autonomous policy engine, or
+authorization to update canon. Merge and system integration require approval.
